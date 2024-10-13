@@ -1,15 +1,15 @@
 import { Body, Controller, Delete, Get, Param, Post, Put } from '@nestjs/common';
 import { TrainingService } from './training.service';
 import { CreateTrainingDto } from './training.dto';
-import { Training } from 'src/entities/training.entity';
+import { Training } from 'src/training/training.entity';
 
 @Controller('trainings')
 export class TrainingController {
     constructor(private readonly trainingService: TrainingService) {}
 
     @Post()
-    create(@Body() createTrainingDto: CreateTrainingDto): Promise<Training> {
-        return this.trainingService.newTraining(createTrainingDto);
+    async create(@Body() createTrainingDto: CreateTrainingDto): Promise<Training> {
+        return await  this.trainingService.newTraining(createTrainingDto);
     }
 
     @Get()

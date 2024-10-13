@@ -1,39 +1,68 @@
-import { IsArray, IsDateString, IsEnum, IsNotEmpty, IsNumber, IsString, MaxLength } from 'class-validator';
+import { Type } from 'class-transformer';
+import { IsString, IsNumber, IsArray, ValidateNested, IsNotEmpty } from 'class-validator';
 
-export class CreateTrainingDto {
-    @IsNotEmpty()
-    @MaxLength(255) // Assuming 255 characters max for title
-    titre: string;
-
-    @IsNotEmpty()
+export class CreateActivityDto {
     @IsString()
+    @IsNotEmpty()
+    title: string;
+
+    @IsString()
+    @IsNotEmpty()
     description: string;
+}
 
-    @IsNotEmpty()
-    @IsString()
-    instructor: string;
-
-    @IsNotEmpty()
-    @IsString()
-    location: string;
-
-    @IsEnum(['online', 'hybrid', 'presentiel'])
-    type: 'online' | 'hybrid' | 'presentiel';
+export class CreateCurriculumDto {
+    @IsNumber()
+    day: number; 
 
     @IsArray()
-    @IsString({ each: true }) 
-    targetAudience: string[];
+    @ValidateNested({ each: true }) 
+    @Type(() => CreateActivityDto) 
+    activities: CreateActivityDto[];
+}
 
-    @IsNotEmpty()
+export class CreateTrainingDto {
+    @IsString()
+    @IsNotEmpty() 
+    title: string;
+
+    @IsString()
+    @IsNotEmpty() 
+    description: string;
+
+    @IsString()
+    @IsNotEmpty() 
+    date: string;
+
+    @IsString()
+    @IsNotEmpty() 
+    location: string;
+
+    @IsString()
+    @IsNotEmpty() 
+    targetAudience: string;
+
     @IsNumber()
     numberOfDays: number;
 
-    @IsEnum(['brouillon', 'publié', 'programmé'])
-    statut: 'brouillon' | 'publié' | 'programmé';
+    @IsString()
+    @IsNotEmpty() 
+    trainer: string;
 
-    @IsDateString()
-    start_date: Date;
+    @IsString()
+    @IsNotEmpty() 
+    type: string;
 
-    @IsDateString()
-    end_date: Date;
+    @IsString()
+    @IsNotEmpty() 
+    status: string;
+
+    @IsString()
+    @IsNotEmpty() 
+    thumbnail: string;
+
+    @IsArray()
+    @ValidateNested({ each: true }) 
+    @Type(() => CreateCurriculumDto) 
+    curriculum: CreateCurriculumDto[];
 }
