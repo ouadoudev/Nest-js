@@ -1,7 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../db/user';
+import { CreateUserDto,UpdateUserDto } from './user.dto';
+import * as argon2 from 'argon2';
 
 @Injectable()
 export class UserService {
@@ -14,20 +16,40 @@ export class UserService {
     return this.userRepository.find();
   }
 
-  async findOne(id: number): Promise<User> {
-    return this.userRepository.findOneBy({ id });
+  async findOne(id: string): Promise<User> {
+    const user = await this.userRepository.findOneBy({ id });
+    if (!user) {
+      throw new NotFoundException(`User with ID ${id} not found`);
+    }
+    return user;
   }
 
-  async create(user: Partial<User>): Promise<User> {
-    const newUser = this.userRepository.create(user);
-    return this.userRepository.save(newUser);
+  async createUser(createUserDto: CreateUserDto): Promise<User> {
+    const hashedPassword = await argon2.hash(createUserDto.password, {
+      type: argon2.argon2id,
+    });
+    const userToCreate = {
+      ...createUserDto,
+      password: hashedPassword,
+    };
+
+    const user = this.userRepository.create(userToCreate);
+    return await this.userRepository.save(user);
   }
 
-  async update(id: number, updatedUser: Partial<User>): Promise<void> {
-    await this.userRepository.update(id, updatedUser);
+  async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {
+    const existingUser = await this.findOne(id);
+    if (updateUserDto.password) {
+      updateUserDto.password = await argon2.hash(updateUserDto.password, {
+        type: argon2.argon2id,
+      });
+    }
+    await this.userRepository.update(existingUser.id, updateUserDto);
+    return this.findOne(id);
   }
 
-  async delete(id: number): Promise<void> {
-    await this.userRepository.delete(id);
+  async delete(id: string): Promise<void> {
+    const user = await this.findOne(id);
+    await this.userRepository.delete(user.id);
   }
 }
