@@ -1,10 +1,10 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Training } from 'src/training/training.entity';
 import { Repository } from 'typeorm';
-import { CreateTrainingDto } from './training.dto';
-import { Curriculum } from './curriculum.entity';
-import { Activity } from './activity.entity';
+import { Training } from './entities/training.entity';
+import { Curriculum } from './entities/curriculum.entity';
+import { Activity } from './entities/activity.entity';
+import { CreateTrainingDto } from './dto/training.dto';
 
 @Injectable()
 export class TrainingService {
@@ -17,72 +17,95 @@ export class TrainingService {
     private readonly activityRepository: Repository<Activity>,
   ) {}
 
+  // Create a new training
   async newTraining(createTrainingDto: CreateTrainingDto): Promise<Training> {
-    // Ensure curriculum is defined and is an array
-    if (
-      !createTrainingDto.curriculum ||
-      !Array.isArray(createTrainingDto.curriculum)
-    ) {
-      throw new Error('Curriculum must be provided and should be an array');
+    const { curriculum: curriculumDto, ...trainingData } = createTrainingDto;
+    if (!curriculumDto || !curriculumDto.activities || curriculumDto.activities.length === 0) {
+      throw new BadRequestException('Curriculum must contain at least one activity');
     }
 
-    // Create the new training object with validated curriculum
-    const newTraining = this.trainingRepository.create({
-      ...createTrainingDto,
-      curriculum: createTrainingDto.curriculum.map((curriculumDto) => {
-        // Check if activities are defined and is an array
-        if (
-          !curriculumDto.activities ||
-          !Array.isArray(curriculumDto.activities)
-        ) {
-          throw new Error(
-            `Activities for day ${curriculumDto.day} must be provided and should be an array`,
-          );
-        }
-
-        // Create a new Curriculum object
-        const curriculum = new Curriculum();
-        curriculum.day = curriculumDto.day;
-
-        // Create activities for each curriculum
-        curriculum.activities = curriculumDto.activities.map((activityDto) => {
-          const activity = new Activity();
-          activity.title = activityDto.title;
-          activity.description = activityDto.description;
-          return activity;
-        });
-
-        return curriculum;
-      }),
+    const activities = curriculumDto.activities.map((activityDto) => {
+      return this.activityRepository.create(activityDto);
     });
 
-    // Save the new training object to the database
-    return await this.trainingRepository.save(newTraining);
+    const curriculum = this.curriculumRepository.create({
+      totalDays: curriculumDto.totalDays,
+      activities,
+    });
+
+    const newTraining = this.trainingRepository.create({
+      ...trainingData,
+      curriculum,
+    });
+
+    await this.trainingRepository.save(newTraining);
+
+    return newTraining;
   }
 
+  // Fetch all trainings with curriculum and activities
   async findAll(): Promise<Training[]> {
-    return this.trainingRepository.find();
+    return this.trainingRepository.find({
+      relations: ['curriculum', 'curriculum.activities'],
+    });
   }
 
+  // Fetch a specific training by ID
   async findOne(id: number): Promise<Training> {
-    const training = await this.trainingRepository.findOneBy({ id });
+    const training = await this.trainingRepository.findOne({
+      where: { id },
+      relations: ['curriculum', 'curriculum.activities'],
+    });
+
     if (!training) {
       throw new NotFoundException(`Training with id ${id} not found`);
     }
+
     return training;
   }
 
-  async updateTraining(
-    id: number,
-    updateTrainingDto: CreateTrainingDto,
-  ): Promise<Training> {
+
+
+  // Update an existing training
+  async updateTraining(id: number, updateTrainingDto: CreateTrainingDto): Promise<Training> {
     const training = await this.findOne(id);
-    this.trainingRepository.merge(training, updateTrainingDto);
+    const { curriculum: updatedCurriculumDto, ...updatedTrainingData } = updateTrainingDto;
+
+    // Update the main training fields
+    Object.assign(training, updatedTrainingData);
+
+    if (updatedCurriculumDto) {
+      // Clear existing activities and replace with new ones
+      await this.activityRepository.delete({ curriculum: { id: training.curriculum.id } });
+
+      const updatedActivities = updatedCurriculumDto.activities.map((activityDto) => {
+        return this.activityRepository.create(activityDto);
+      });
+
+      // Update the curriculum entity
+      Object.assign(training.curriculum, {
+        totalDays: updatedCurriculumDto.totalDays,
+        activities: updatedActivities,
+      });
+
+      await this.curriculumRepository.save(training.curriculum);
+    }
+
     return this.trainingRepository.save(training);
   }
 
-  async removeTraining(id: number): Promise<void> {
+   // Remove a specific training by ID along with its curriculum and activities
+   async removeTraining(id: number): Promise<void> {
     const training = await this.findOne(id);
+
+    if (!training) {
+      throw new NotFoundException(`Training with id ${id} not found`);
+    }
+    if (training.curriculum) {
+      const curriculumId = training.curriculum.id;
+      await this.activityRepository.delete({ curriculum: { id: curriculumId } });
+      await this.curriculumRepository.delete(curriculumId);
+    }
     await this.trainingRepository.remove(training);
   }
 }

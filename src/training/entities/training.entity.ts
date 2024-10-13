@@ -1,4 +1,10 @@
-import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  OneToOne,
+  JoinColumn,
+} from 'typeorm';
 import { Curriculum } from './curriculum.entity';
 
 @Entity()
@@ -9,20 +15,14 @@ export class Training {
   @Column()
   title: string;
 
-  @Column()
+  @Column({ type: 'text' })
   description: string;
 
   @Column()
-  date: string;
+  durationInDays: number;
 
   @Column()
   location: string;
-
-  @Column()
-  targetAudience: string;
-
-  @Column()
-  numberOfDays: number;
 
   @Column()
   trainer: string;
@@ -36,7 +36,10 @@ export class Training {
   @Column()
   thumbnail: string;
 
-  @OneToMany(() => Curriculum, curriculum => curriculum.training, { cascade: true })
-  curriculum: Curriculum[];
+  @Column("simple-array")
+  targetAudience: string[];
 
+  @OneToOne(() => Curriculum, { cascade: true, eager: true })
+  @JoinColumn()
+  curriculum: Curriculum;
 }
