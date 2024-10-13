@@ -1,9 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { User } from '../db/user';
-import { CreateUserDto,UpdateUserDto } from './user.dto';
+import { User } from '../entities/user.entity';
+import { CreateUserDto, UpdateUserDto } from './user.dto';
 import * as argon2 from 'argon2';
+import { AuthDto } from 'src/auth/auth.dto';
 
 @Injectable()
 export class UserService {
@@ -11,6 +12,19 @@ export class UserService {
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
   ) {}
+
+  async validateUser(authDto: AuthDto) {
+    const { email, password } = authDto;
+    const user = await this.userRepository.findOne({ where: { email } });
+    if (!user) {
+      return null;
+    }
+    const isValidPassword = await argon2.verify(user.password, password);
+    if (!isValidPassword) {
+      return null;
+    }
+    return user;
+  }
 
   async findAll(): Promise<User[]> {
     return this.userRepository.find();
