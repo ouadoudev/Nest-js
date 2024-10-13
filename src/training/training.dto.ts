@@ -1,35 +1,68 @@
-import { IsString, IsNumber, IsArray } from 'class-validator';
+import { Type } from 'class-transformer';
+import { IsString, IsNumber, IsArray, ValidateNested, IsNotEmpty } from 'class-validator';
 
+export class CreateActivityDto {
+    @IsString()
+    @IsNotEmpty()
+    title: string;
+
+    @IsString()
+    @IsNotEmpty()
+    description: string;
+}
+
+export class CreateCurriculumDto {
+    @IsNumber()
+    day: number; 
+
+    @IsArray()
+    @ValidateNested({ each: true }) 
+    @Type(() => CreateActivityDto) 
+    activities: CreateActivityDto[];
+}
 
 export class CreateTrainingDto {
-  @IsString()
-  title: string;
+    @IsString()
+    @IsNotEmpty() 
+    title: string;
 
-  @IsString()
-  description: string;
+    @IsString()
+    @IsNotEmpty() 
+    description: string;
 
-  @IsString()
-  date: string;
+    @IsString()
+    @IsNotEmpty() 
+    date: string;
 
-  @IsString()
-  location: string;
+    @IsString()
+    @IsNotEmpty() 
+    location: string;
 
-  @IsString()
-  targetAudience: string;
+    @IsString()
+    @IsNotEmpty() 
+    targetAudience: string;
 
-  @IsNumber()
-  numberOfDays: number;
+    @IsNumber()
+    numberOfDays: number;
 
-  @IsString()
-  trainer: string;
+    @IsString()
+    @IsNotEmpty() 
+    trainer: string;
 
-  @IsString()
-  type: string;
+    @IsString()
+    @IsNotEmpty() 
+    type: string;
 
-  @IsString()
-  status: string;
+    @IsString()
+    @IsNotEmpty() 
+    status: string;
 
-  @IsString()
-  thumbnail: string;
+    @IsString()
+    @IsNotEmpty() 
+    thumbnail: string;
 
+    @IsArray()
+    @ValidateNested({ each: true }) 
+    @Type(() => CreateCurriculumDto) 
+    curriculum: CreateCurriculumDto[];
 }

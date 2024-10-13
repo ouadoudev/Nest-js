@@ -3,9 +3,11 @@ import { TrainingController } from './training.controller';
 import { TrainingService } from './training.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Training } from 'src/training/training.entity';
+import { Curriculum } from './curriculum.entity';
+import { Activity } from './activity.entity';
 
 @Module({
-  imports:[TypeOrmModule.forFeature([Training])],
+  imports:[TypeOrmModule.forFeature([Training, Curriculum,Activity])],
   controllers: [TrainingController],
   providers: [TrainingService]
 })
