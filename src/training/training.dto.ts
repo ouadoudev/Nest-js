@@ -1,39 +1,35 @@
-import { IsArray, IsDateString, IsEnum, IsNotEmpty, IsNumber, IsString, MaxLength } from 'class-validator';
+import { IsString, IsNumber, IsArray } from 'class-validator';
+
 
 export class CreateTrainingDto {
-    @IsNotEmpty()
-    @MaxLength(255) // Assuming 255 characters max for title
-    titre: string;
+  @IsString()
+  title: string;
 
-    @IsNotEmpty()
-    @IsString()
-    description: string;
+  @IsString()
+  description: string;
 
-    @IsNotEmpty()
-    @IsString()
-    instructor: string;
+  @IsString()
+  date: string;
 
-    @IsNotEmpty()
-    @IsString()
-    location: string;
+  @IsString()
+  location: string;
 
-    @IsEnum(['online', 'hybrid', 'presentiel'])
-    type: 'online' | 'hybrid' | 'presentiel';
+  @IsString()
+  targetAudience: string;
 
-    @IsArray()
-    @IsString({ each: true }) 
-    targetAudience: string[];
+  @IsNumber()
+  numberOfDays: number;
 
-    @IsNotEmpty()
-    @IsNumber()
-    numberOfDays: number;
+  @IsString()
+  trainer: string;
 
-    @IsEnum(['brouillon', 'publié', 'programmé'])
-    statut: 'brouillon' | 'publié' | 'programmé';
+  @IsString()
+  type: string;
 
-    @IsDateString()
-    start_date: Date;
+  @IsString()
+  status: string;
 
-    @IsDateString()
-    end_date: Date;
+  @IsString()
+  thumbnail: string;
+
 }

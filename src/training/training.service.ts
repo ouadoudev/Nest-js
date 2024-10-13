@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Training } from 'src/entities/training.entity';
+import { Training } from 'src/training/training.entity';
 import { Repository } from 'typeorm';
 import { CreateTrainingDto } from './training.dto';
 
@@ -13,7 +13,7 @@ export class TrainingService {
 
     async newTraining(createTrainingDto: CreateTrainingDto): Promise<Training> {
         const newTraining = this.trainingRepository.create(createTrainingDto);
-        return this.trainingRepository.save(newTraining);
+        return await this.trainingRepository.save(newTraining);
     }
 
     async findAll(): Promise<Training[]> {
