@@ -25,12 +25,9 @@ export class TrainingService {
     ) {
       throw new Error('Curriculum must be provided and should be an array');
     }
-
-    // Create the new training object with validated curriculum
     const newTraining = this.trainingRepository.create({
       ...createTrainingDto,
       curriculum: createTrainingDto.curriculum.map((curriculumDto) => {
-        // Check if activities are defined and is an array
         if (
           !curriculumDto.activities ||
           !Array.isArray(curriculumDto.activities)
@@ -39,12 +36,8 @@ export class TrainingService {
             `Activities for day ${curriculumDto.day} must be provided and should be an array`,
           );
         }
-
-        // Create a new Curriculum object
         const curriculum = new Curriculum();
         curriculum.day = curriculumDto.day;
-
-        // Create activities for each curriculum
         curriculum.activities = curriculumDto.activities.map((activityDto) => {
           const activity = new Activity();
           activity.title = activityDto.title;
@@ -55,8 +48,6 @@ export class TrainingService {
         return curriculum;
       }),
     });
-
-    // Save the new training object to the database
     return await this.trainingRepository.save(newTraining);
   }
 
